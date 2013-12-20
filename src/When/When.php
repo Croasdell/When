@@ -747,6 +747,54 @@ class When extends \DateTime
                 $this->bydays = array("0" . $dayOfWeekAbr);
             }
         }
+
+        if ($this->freq === "yearly")
+        {
+            if (!isset($this->byyeardays) && !isset($this->bymonthdays) && !isset($this->bydays))
+            {
+                $date = clone $this->startDate;
+                $leapYear = (int)$date->format('L');
+                $yearDayPositive = $date->format('z') + 1;
+                $yearDayNegative = -366 + (int)$yearDayPositive;
+                $negativePivotDay = date('z', strtotime("{$date->year}-03-01")) + 1;
+
+                if ($leapYear)
+                {
+                    // The pivot date for using the negative day of year changes because February ends where March usually starts
+                    $negativePivotDay = date('z', strtotime("{$date->year}-02-29")) + 1;
+
+                    // Negative day calculation is different because the year is one day longer
+                    $yearDayNegative = -367 + (int)$yearDayPositive;
+                }
+
+                if ($yearDayPositive < $negativePivotDay)
+                {
+                    // Starting before the pivot date, use the positive day of year. This will be the same in leap and non-leap years
+                    $yearDayToUse = $yearDayPositive;
+                }
+                else if ($yearDayPositive == $negativePivotDay)
+                {
+                    // Starting on the pivot date, day of year depends on whether it's starting on a leap year or not
+                    if ($leapYear)
+                    {
+                        // Starting on a leap year, use the positive day of year (will be different between leap and non-leap years)
+                        $yearDayToUse = $yearDayPositive;
+                    }
+                    else
+                    {
+                        // Starting on a regular year, use the negative day of year. It will always be the same, regardless of leap year
+                        $yearDayToUse = $yearDayNegative;
+                    }
+                }
+                else
+                {
+                    // Starting after the pivot date, use the negative day of year. This will keep it consistent leap and non-leap years
+                    $yearDayToUse = $yearDayNegative;
+                }
+
+                $this->byyeardays = array($yearDayToUse);
+            }
+        }
     }
 
     protected static function createItemsList($list, $delimiter)
