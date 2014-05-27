@@ -554,7 +554,16 @@ class When extends \DateTime
                     $startWeekDay->modify("last " . $wkst);
                     $startWeekDay->modify("+7 days");
 
-                    $daysLeft = intval($startWeekDay->format('j')) - intval($dateLooper->format("j"));
+                    $nextWeekDay = intval($startWeekDay->format('j'));
+                    $looperDay = intval($dateLooper->format("j"));
+                    $daysLeft = $nextWeekDay - $looperDay;
+                    if ($daysLeft < 0)
+                    {
+                        // Negative days left means that the next week ends next month (next week d.o.m < looper d.o.m), change the approach slightly
+                        // Subtract the looper date from the number of days in the month then add the next week date d.o.m
+                        // > rod@vectormediagroup.com
+                        $daysLeft = (intval($dateLooper->format("t")) - $looperDay + $nextWeekDay);
+                    }
 
                     $startWeekDay->modify("-7 days");
                 }
